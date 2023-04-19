@@ -50,12 +50,7 @@ OPENAI_API_KEY=your_openai_api_key
 
 4. Set up an AWS account and configure the AWS CLI with your credentials. This is necessary for using Amazon Polly for speech synthesis.
 
-5. Install the Whisper ASR model:
-```
-pip install whisper-asr
-```
-
-6. If you'd like, you can update the hotkey (currently CTRL+Shift+1) to whatever you'd like in the main.py file
+5. If you'd like, you can update the hotkey (currently CTRL+Shift+1) to whatever you'd like in the main.py file
 
 ## Usage
 1. Run the main script:

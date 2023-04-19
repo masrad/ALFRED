@@ -6,4 +6,3 @@ SpeechRecognition
 PyAudio
 keyboard
 python-dotenv
-asyncio
