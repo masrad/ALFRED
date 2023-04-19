@@ -1,0 +1,22 @@
+# General
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyc
+desktop.ini
+
+# Virtual environments
+venv/
+env/
+*.virtualenv
+
+# Visual Studio Code
+.vscode
+
+# Audio files
+*.mp3
+*.wav
+
+# dotenv environment variables file
+.env
