@@ -1,4 +1,3 @@
-@ -1,97 +0,0 @@
 import openai
 import os
 from dotenv import load_dotenv

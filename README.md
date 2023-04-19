@@ -1,4 +1,3 @@
-@ -1,84 +0,0 @@
 ![Alfred](docs/alfred.png)
 # A.L.F.R.E.D. - Artificial Lifeform Rendered for Expedient Discourse
 Alfred is a personal voice assistant inspired by the popular butler, you know the one. It is designed to answer queries and perform tasks using the OpenAI GPT-3.5-turbo API. The assistant uses speech recognition and synthesis to provide a natural language interface. Alfred is a helpful assistant who has some concerns about local crime and certainly does not know who that masked vigilante is.
