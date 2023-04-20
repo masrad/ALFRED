@@ -13,9 +13,9 @@ env/
 
 # Visual Studio Code
 .vscode
+.vs
 
-# Audio files
-*.mp3
+# Prompt files
 *.wav
 
 # dotenv environment variables file
