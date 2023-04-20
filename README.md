@@ -110,11 +110,13 @@ If you would like to use any of the tools I have included, you will need to foll
 
 ## Important
 Remember, if you want to use a service and have an API key setup, you must enable the tool by updating the bool in the Settings class:
+```
 enable_search: bool = True
 enable_wikipedia: bool = True
 enable_calculator: bool = True
 enable_wolfram_alpha: bool = True
 enable_weather: bool = False
+```
 
 ## License
 This project is licensed with GNU General Public License Version 3, see LICENSE.md for more information
