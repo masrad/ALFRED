@@ -4,7 +4,7 @@ Alfred is a personal voice assistant inspired by the popular butler, you know th
 
 ## Features
 * Speech recognition using the speech_recognition and whisper libraries
-* Speech synthesis using Amazon Polly
+* Speech synthesis using pyttsx3
 * Uses OpenAI GPT-3.5-turbo for AI-powered conversation
 * Activates with a hotkey: ctrl+shift+1
 * Terminates the conversation when the user says "Thank you" or a similar phrase
@@ -48,8 +48,6 @@ https://www.geeksforgeeks.org/how-to-install-ffmpeg-on-windows/
 OPENAI_API_KEY=your_openai_api_key
 ```
 
-4. Set up an AWS account and configure the AWS CLI with your credentials. This is necessary for using Amazon Polly for speech synthesis.
-
 5. If you'd like, you can update the hotkey (currently CTRL+Shift+1) to whatever you'd like in the main.py file
 
 ## Usage
@@ -70,7 +68,7 @@ python main.py
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 ## Roadmap
-* Use a library such as pyttsx3 to handle text to speech locally, as AWS incurs cost
+* Figure out better voice options for pyttsx3 - implemented to remove AWS requirement, but sounds worse
 * Implement custom wake word recognition to prompt
 * Release as a Windows service
 * Implement support for llama.cpp api to run entirely locally using GPT4All, Vicuna and Koala among others

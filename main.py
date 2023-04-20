@@ -3,9 +3,7 @@ import os
 from dotenv import load_dotenv
 import asyncio
 import whisper
-import boto3
-import pydub
-from pydub import playback
+import pyttsx3
 import speech_recognition as sr
 import keyboard
 import random
@@ -17,21 +15,11 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 # Create a recognizer object
 recognizer = sr.Recognizer()
 
-def synthesize_speech(text, output_filename):
-    polly = boto3.client('polly', region_name='us-east-1')
-    response = polly.synthesize_speech(
-        Text=text,
-        OutputFormat='mp3',
-        VoiceId='Arthur',
-        Engine='neural'
-    )
-
-    with open(output_filename, 'wb') as f:
-        f.write(response['AudioStream'].read())
-
-def play_audio(file):
-    sound = pydub.AudioSegment.from_file(file, format="mp3")
-    playback.play(sound)
+def synthesize_speech(text):
+    engine = pyttsx3.init()
+    engine.setProperty('rate', 150)  # Adjust speech rate
+    engine.say(text)
+    engine.runAndWait()
 
 async def main():
     while True:
@@ -47,8 +35,7 @@ async def main():
         ]
 
         greeting = random.choice(['Good evening. Can I help you with anything?', 'Alfred, At your service.', 'What can I do for you?'])
-        synthesize_speech(greeting, 'response.mp3')
-        play_audio('response.mp3')
+        synthesize_speech(greeting)
 
         while True:
             with sr.Microphone() as source:
@@ -85,8 +72,7 @@ async def main():
                 bot_response = response["choices"][0]["message"]["content"]
 
                 print("Bot's response:", bot_response)
-                synthesize_speech(bot_response, 'response.mp3')
-                play_audio('response.mp3')
+                synthesize_speech(bot_response)
 
                 conversation_history.append({"role": "assistant", "content": bot_response})
 

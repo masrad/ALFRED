@@ -1,8 +1,7 @@
 boto3
 openai
 openai_whisper
-pydub
 SpeechRecognition
-PyAudio
 keyboard
 python-dotenv
+pyttsx3
