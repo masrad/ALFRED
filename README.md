@@ -43,7 +43,7 @@ choco install ffmpeg
 # on Windows using Scoop (https://scoop.sh/)
 scoop install ffmpeg
 
-# on Windows using the dumber way
+# on Windows using the less good way
 https://www.geeksforgeeks.org/how-to-install-ffmpeg-on-windows/
 ```
 
