@@ -150,5 +150,6 @@ If you want to change Barks voice:
 ```
 history_prompt: str = "en_speaker_1"
 ```
+The available "voices" that you can use should be located in the venv folder, likely somewhere like \venv\Lib\site-packages\bark\assets\prompts
 ## License
 This project is licensed with GNU General Public License Version 3, see LICENSE.md for more information
