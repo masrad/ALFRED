@@ -139,7 +139,7 @@ enable_wikipedia: bool = True
 enable_calculator: bool = True
 enable_wolfram_alpha: bool = True
 enable_weather: bool = True
-enable_zapier: bool - True
+enable_zapier: bool = True
 ```
 If you want to enable Bark:
 ```
