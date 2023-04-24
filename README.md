@@ -2,13 +2,20 @@
 # A.L.F.R.E.D. - Artificial Lifeform Rendered for Expedient Discourse
 Alfred is a LangChain and GPT-3.5-turbo powered personal assistant for you computer!
 
+## Latest update
+* Added ability to switch between pyttsx3 and Bark for voice synthesis
+* Removed hotkey for now
+* Added intro.wav so that you know when it's done loading and is waiting for wake word (it was generated with Bark, that should give you an idea of the voice quality)
+* Made Barks history_prompt (also known as the voice) changable in one spot
+* Exceptions now loop back to wake word detection instead of crashing
+
 ## Features
+* Natural language integration with Zapier, enabling Alfred to access, use and manage over 5000 applications
 * Speech recognition using the speech_recognition and whisper libraries
-* Speech synthesis using pyttsx3
+* Speech synthesis using pyttsx3 or Bark (https://github.com/suno-ai/bark)
 * Uses LangChain to use tools to answer questions with more current data
-* Activates with a hotkey: ctrl+shift+1 - user editable
 * Activate with a spoken wake word "Alfred" - user editable
-* Terminates the conversation when the user says "Thank you" or a similar phrase
+* Terminates the conversation when the bot says "You're welcome" or a similar phrase
 * Configurable tools for LangChain, so if you don't have an API for a tool or don't want the tool, you can disable it
 
 ## Setup
@@ -56,7 +63,7 @@ WOLFRAM_ALPHA_APPID=your-key-here
 OPENWEATHERMAP_API_KEY=your-key-here
 ```
 
-4. If you'd like, you can update the hotkey (currently CTRL+Shift+1) and/or the Wake Word to whatever you'd like in the main.py file
+4. If you'd like, you can update the Wake Word to whatever you'd like in the main.py file
 
 ## Usage
 1. Run the main scrript:
@@ -64,7 +71,7 @@ OPENWEATHERMAP_API_KEY=your-key-here
 python main.py
 ```
 
-2. Press the hotkey (default is CTRL+Shift+1) or speak the Wake Word "Alfred"
+2. Speak the Wake Word "Alfred"
 
 3. Once you hear a chime, Speak your query or command.
 
@@ -77,6 +84,12 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 
 ## Tools
 If you would like to use any of the tools I have included, you will need to follow a few instructions
+### Zapier
+1. Create a Zapier Dev account
+* Go to https://zapier.com/l/natural-language-actions and request API access (it's pretty instant)
+* Begin making Actions in Zapier, choose "Let AI Guess" for most fields, and the AI will determine what should go in that field
+* Copy your key into the .env file at ZAPIER_NLA_API_KEY
+* You're done. You can use complex chains such as "Summarize the last email I got about the TPS reports and add it to my todo list so that I will remember to review them tomorrow. Also ask Greg in Teams what he thinks about the TPS reports and add a funny gif to the message too."
 ### Google Search
 1. Get Google API key
 * Go to https://console.cloud.google.com/apis/dashboard while signed in
@@ -118,5 +131,23 @@ enable_wolfram_alpha: bool = True
 enable_weather: bool = False
 ```
 
+## Important
+Remember, if you want to use a service and have an API key setup, you must enable the tool by updating the bool in the Settings class:
+```
+enable_search: bool = True
+enable_wikipedia: bool = True
+enable_calculator: bool = True
+enable_wolfram_alpha: bool = True
+enable_weather: bool = True
+enable_zapier: bool - True
+```
+If you want to enable Bark:
+```
+use_bark: bool = True
+```
+If you want to change Barks voice:
+```
+history_prompt: str = "en_speaker_1"
+```
 ## License
 This project is licensed with GNU General Public License Version 3, see LICENSE.md for more information

@@ -16,7 +16,15 @@ env/
 .vs
 
 # Prompt files
-*.wav
+audio_temp.wav
+audio_prompt.wav
 
 # dotenv environment variables file
 .env
+
+#Pyinstaller
+build/
+dist/
+main.spec
+icon.ico
+config.ini
