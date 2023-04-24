@@ -1,4 +1,5 @@
 ![Alfred](docs/alfred.png)
+<sub>Image generated with Blue Willow AI on Discord</sub>
 # A.L.F.R.E.D. - Artificial Lifeform Rendered for Expedient Discourse
 Alfred is a LangChain and GPT-3.5-turbo powered personal assistant for you computer!
 
