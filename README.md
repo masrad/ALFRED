@@ -1,6 +1,7 @@
 ![Alfred](docs/alfred.png)
 # A.L.F.R.E.D. - Artificial Lifeform Rendered for Expedient Discourse
-Alfred is a LangChain and GPT-3.5-turbo powered personal assistant for you computer!
+Alfred is a LangChain and GPT-3.5-turbo powered personal assistant for you computer!<br>
+<sub>Image generated with Blue Willow AI on Discord</sub>
 
 ## Latest update
 * Added ability to switch between pyttsx3 and Bark for voice synthesis
@@ -139,7 +140,7 @@ enable_wikipedia: bool = True
 enable_calculator: bool = True
 enable_wolfram_alpha: bool = True
 enable_weather: bool = True
-enable_zapier: bool - True
+enable_zapier: bool = True
 ```
 If you want to enable Bark:
 ```
@@ -149,5 +150,6 @@ If you want to change Barks voice:
 ```
 history_prompt: str = "en_speaker_1"
 ```
+The available "voices" that you can use should be located in the venv folder, likely somewhere like \venv\Lib\site-packages\bark\assets\prompts
 ## License
 This project is licensed with GNU General Public License Version 3, see LICENSE.md for more information
