@@ -17,5 +17,5 @@ SoundFile
 IPython
 google-api-python-client
 pinecone-client
-tkinter
+keyboard
 sv_ttk
