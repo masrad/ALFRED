@@ -82,7 +82,7 @@ readonlymemory = ReadOnlySharedMemory(memory=memory)
 
 # Define the tools
 search = GoogleSearchAPIWrapper(k=2)
-wikipedia = WikipediaAPIWrapper(lang='en', top_k_results=1)
+wikipedia = WikipediaAPIWrapper()
 llm_math = LLMMathChain(llm=llm)
 wolfram_alpha = WolframAlphaAPIWrapper()
 weather = OpenWeatherMapAPIWrapper()

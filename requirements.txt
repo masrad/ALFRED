@@ -1,3 +1,4 @@
+google-api-python-client==2.84.0
 boto3==1.26.114
 openai==0.27.4
 openai_whisper==20230314
@@ -7,7 +8,8 @@ PyAudio==0.2.13
 python-dotenv
 git+https://github.com/JonathanFly/bark
 pyttsx3
-langchain
+pydantic==1.10.7
+langchain==0.0.146
 wikipedia
 wolframalpha
 pyowm
@@ -15,7 +17,5 @@ pygame
 torchaudio
 SoundFile
 IPython
-google-api-python-client
 pinecone-client
-tkinter
 sv_ttk

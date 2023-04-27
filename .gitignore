@@ -9,6 +9,7 @@ desktop.ini
 # Virtual environments
 venv/
 env/
+vvv/
 *.virtualenv
 
 # Visual Studio Code
