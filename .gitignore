@@ -16,15 +16,21 @@ env/
 .vs
 
 # Prompt files
-audio_temp.wav
 audio_prompt.wav
+audio_temp.wav
 
 # dotenv environment variables file
 .env
+Backup.env
 
 #Pyinstaller
 build/
 dist/
 main.spec
-icon.ico
 config.ini
+
+# Pinecone stuff
+python.langchain.com/
+
+# Vector stuff
+*.pkl

@@ -1,47 +1,66 @@
-import openai
 import os
-from dotenv import load_dotenv
+import random
+import keyboard
 import asyncio
+import traceback
+import configparser
+from pathlib import Path
+from dotenv import load_dotenv
+
+import pygame.mixer
 import whisper
 import pyttsx3
 import speech_recognition as sr
-import random
-import pygame.mixer
-from pydantic import BaseSettings
-from langchain.agents import Tool
-from langchain.memory import ConversationBufferMemory
-from langchain.chat_models import ChatOpenAI
-from langchain.utilities import GoogleSearchAPIWrapper, WikipediaAPIWrapper, WolframAlphaAPIWrapper, OpenWeatherMapAPIWrapper
-from langchain.agents import initialize_agent
-from langchain.chains import LLMMathChain
-from langchain.utilities.zapier import ZapierNLAWrapper
-from langchain.agents.agent_toolkits import ZapierToolkit
-from pathlib import Path
 from bark import SAMPLE_RATE, generate_audio, preload_models
 from IPython.display import Audio
 import torchaudio
-torchaudio.set_audio_backend("soundfile")
 from scipy.io.wavfile import write as write_wav
 
-## Settings ##
-# Tools Settings (True or False)
-class SearchSettings(BaseSettings):
-    enable_search: bool = True
-    enable_wikipedia: bool = False
-    enable_calculator: bool = True
-    enable_wolfram_alpha: bool = True
-    enable_weather: bool = True
-    enable_zapier: bool = True
+import openai
+import pinecone
+from pydantic import BaseSettings
+from langchain.agents import Tool
+from langchain.memory import ConversationTokenBufferMemory, ReadOnlySharedMemory
+from langchain.chat_models import ChatOpenAI
+from langchain.utilities import GoogleSearchAPIWrapper, WikipediaAPIWrapper, WolframAlphaAPIWrapper, OpenWeatherMapAPIWrapper
+from langchain.agents import initialize_agent
+from langchain.chains import LLMMathChain, RetrievalQA
+from langchain.utilities.zapier import ZapierNLAWrapper
+from langchain.agents.agent_toolkits import ZapierToolkit
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.vectorstores import Pinecone
+from langchain.chains.question_answering import load_qa_chain
+from langchain.chains.summarize import load_summarize_chain
 
-    class Config:
-        env_prefix = "SEARCH_"
+# Set audio backend to soundfile
+torchaudio.set_audio_backend("soundfile")
 
-# Voice Settings 
-# In order to use Bark, set use_bark to True
-# You can also change the history_prompt for Bark, see Bark documentation for more details
+# Load settings.ini and get bot name
+config = configparser.ConfigParser()
+config.read("settings.ini")
+bot_name = config.get("settings", "bot_name")
+BOT_NAME = bot_name
+
+class SearchSettings:
+    def __init__(self, file_path="settings.ini"):
+        config = configparser.ConfigParser()
+        config.read(file_path)
+
+        self.enable_search = config.getboolean("tools", "enable_search")
+        self.enable_wikipedia = config.getboolean("tools", "enable_wikipedia")
+        self.enable_calculator = config.getboolean("tools", "enable_calculator")
+        self.enable_wolfram_alpha = config.getboolean("tools", "enable_wolfram_alpha")
+        self.enable_weather = config.getboolean("tools", "enable_weather")
+        self.enable_zapier = config.getboolean("tools", "enable_zapier")
+        self.enable_pinecone = config.getboolean("tools", "enable_pinecone")
+
+# You can change the history_prompt for Bark in the settings GUI or settings.ini, see Bark documentation for more details
 class VoiceSynthesisSettings(BaseSettings):
-    use_bark: bool = False
-    history_prompt: str = "en_speaker_1"
+    use_bark = config.getboolean("voice", "use_bark")
+    history_prompt = config.get("voice", "history_prompt")
+
+    use_bark: bool = use_bark
+    history_prompt: str = history_prompt
 
     class Config:
         env_prefix = "VOICE_SYNTHESIS_"
@@ -61,20 +80,30 @@ GOOGLE_CSE_ID = os.getenv("GOOGLE_CSE_ID")
 WOLFROM_ALPHA_APPID = os.getenv("WOLFROM_ALPHA_APPID")
 OPENWEATHERMAP_API_KEY = os.getenv("OPENWEATHERMAP_API_KEY")
 ZAPIER_NLA_API_KEY = os.getenv("ZAPIER_NLA_API_KEY")
+PINE_API_KEY = os.getenv("PINE_API_KEY")
+PINE_ENV = os.getenv("PINE_ENV")
 
-# Initialize pygame mixer
+# Initialize Pinecone
+embeddings = OpenAIEmbeddings()
+pinecone_env = config.get("pinecone", "pinecone_env")
+
+pinecone.init(
+    api_key=PINE_API_KEY,
+    environment=pinecone_env
+)
+
+index_name = config.get("pinecone", "pinecone_index")
+docsearch = Pinecone.from_existing_index(index_name, embeddings)
+
+settings = SearchSettings("settings.ini")
 pygame.mixer.init()
-
-# Create a settings instance
-settings = SearchSettings()
-
-# Create a voice synthesis settings instance
 voice_synthesis_settings = VoiceSynthesisSettings()
-
-# Create a recognizer object
 recognizer = sr.Recognizer()
 
-# Define the listen for wake word function
+def start_chat():
+    chat_script_path = Path(__file__).parent / "chat.py"
+    os.system(f"python {chat_script_path}")
+
 def listen_for_wake_word(wake_word):
     with sr.Microphone() as source:
         recognizer.adjust_for_ambient_noise(source)
@@ -91,7 +120,6 @@ def listen_for_wake_word(wake_word):
                 print("Could not request results; {0}".format(e))
 
 
-# Define the text to speech function
 def synthesize_speech_v2(text):
     if voice_synthesis_settings.use_bark:
         history_prompt = voice_synthesis_settings.history_prompt
@@ -102,11 +130,10 @@ def synthesize_speech_v2(text):
         play_mp3("audio_temp.wav")
     else:
         engine = pyttsx3.init()
-        engine.setProperty('rate', 150)  # Adjust speech rate
+        engine.setProperty('rate', 150)
         engine.say(text)
         engine.runAndWait()
 
-# Define a function to play the MP3 file
 def play_mp3(file_path):
     pygame.mixer.music.load(file_path)
     pygame.mixer.music.play()
@@ -115,16 +142,43 @@ def play_mp3(file_path):
 
 # Define the memory and the LLM engine
 llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.5, max_tokens=150, verbose=True)
-memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+memory = ConversationTokenBufferMemory(llm=llm, max_token_limit=1000, memory_key="chat_history", return_messages=True)
+doc_chain = load_qa_chain(llm, chain_type="map_reduce")
+readonlymemory = ReadOnlySharedMemory(memory=memory)
 
-# Define the tools
-search = GoogleSearchAPIWrapper()
-wikipedia = WikipediaAPIWrapper()
+# Tool definitions and wikipedia hack
+search = GoogleSearchAPIWrapper(k=2)
+wikipedia = WikipediaAPIWrapper(lang='en', top_k_results=1)
 llm_math = LLMMathChain(llm=llm)
 wolfram_alpha = WolframAlphaAPIWrapper()
 weather = OpenWeatherMapAPIWrapper()
 zapier= ZapierNLAWrapper()
 toolkit = ZapierToolkit.from_zapier_nla_wrapper(zapier)
+retriever = docsearch.as_retriever(search_type="similarity", search_kwargs={"k":2})
+pinecone_tool = RetrievalQA.from_chain_type(llm=llm, chain_type="map_rerank", retriever=docsearch.as_retriever())
+wikisummarize = load_summarize_chain(llm, chain_type="stuff")
+
+class WikiPage:
+    def __init__(self, title, summary):
+        self.title = title
+        self.page_content = summary
+        self.metadata = {}
+
+def wiki_summary(search_query: str) -> str:
+    wikipedia_wrapper = wikipedia
+    wiki_result = wikipedia_wrapper.run(search_query)
+
+    if not wiki_result:
+        return "No good Wikipedia Search Result was found"
+
+    wiki_pages = []
+    for section in wiki_result.split("\n\n"):
+        title, summary = section.split("\nSummary: ", 1)
+        title = title.replace("Page: ", "")
+        wiki_pages.append(WikiPage(title=title, summary=summary))
+
+    summary_result = wikisummarize.run(wiki_pages)
+    return summary_result
 
 tools = []
 
@@ -136,7 +190,6 @@ if settings.enable_search:
             description="Useful when you need to answer questions about current events and real-time information"
         )
     )
-
 if settings.enable_wikipedia:
     tools.append(
         Tool(
@@ -146,7 +199,6 @@ if settings.enable_wikipedia:
             "Use this more than the normal search if the question is about events that occured before 2023, like the 'What was the 2008 financial crisis?' or 'Who won the 2016 US presidential election?'"
         )
     )
-   
 if settings.enable_calculator:
     tools.append(
         Tool(
@@ -155,7 +207,6 @@ if settings.enable_calculator:
             description='Useful for when you need to answer questions about math.'
         )
     )
-
 if settings.enable_wolfram_alpha:
     tools.append(
         Tool(
@@ -166,7 +217,6 @@ if settings.enable_wolfram_alpha:
                         "Input should be a search query"
         )
     )
-
 if settings.enable_weather:
     tools.append(
         Tool(
@@ -175,37 +225,43 @@ if settings.enable_weather:
             description="Useful for when you need to answer questions about weather."
         )
     )
-if settings.enable_zapier:
+if settings.enable_pinecone:
+    pinecone_name = config.get("pinecone", "tool_name")
+    pinecone_description = config.get("pinecone", "tool_description")
+
     tools.append(
         Tool(
-            name='Zapier',
-            func=zapier.run,
-            description="Useful for if you need to help with my todo list, my calendar, email, Teams or other tasks."
+            name=pinecone_name,
+            func=pinecone_tool.run,
+            description=pinecone_description
         )
     )
 
-# Creating a memory for the agent to act as Alfred
-ALFRED_CONTEXT = "You are ALFRED, the extremely advanced AI personal assistant to the user. You should be helpful, knowledgeable, and professional. You have thoughts, opinions and feelings. You have access to various tools and can use these tools to provide the best possible answers to the user's questions. If you are discussing the weather, you will first convert the temperature from Celsius to Fahrenheit."
+bot_context = config.get("settings", "bot_context")
+CONTEXT = bot_context
 
-# Fixing the agent chain so that it can accept both the Zapier tools from the toolkit and the defined tools
-agent_chain = initialize_agent([*toolkit.get_tools(), *tools], llm, agent="chat-conversational-react-description", verbose=True, memory=memory)
+# Probably hacky workaround so that the agent chain respects the Zapier settings since it uses a toolkit
+if settings.enable_zapier:
+    agent_chain = initialize_agent([*toolkit.get_tools(), *tools], llm, agent="chat-conversational-react-description", verbose=True, memory=memory)
+else:
+    agent_chain = initialize_agent(tools, llm, agent="chat-conversational-react-description", verbose=True, memory=memory)
 
-# Add the custom ALFRED prompt to the agent memory so that it can be used
-agent_chain.memory.chat_memory.add_ai_message(ALFRED_CONTEXT)
+agent_chain.memory.chat_memory.add_ai_message(CONTEXT)
 
-# Define the main function
 async def main():
+    config = configparser.ConfigParser()
+    config.read("settings.ini")
+    hotkey = config.get("settings", "hotkey")
+
+    keyboard.add_hotkey(hotkey, start_chat, suppress=True)
+    print(f"Press {hotkey} to launch chat window")
     while True:
-        print(f"Waiting for wake word 'Alfred' to prompt ALFRED")
+        print(f"Waiting for wake word {BOT_NAME} to prompt")
         play_mp3("intro.wav")
 
-        listen_for_wake_word("Alfred")
+        listen_for_wake_word(BOT_NAME)
 
-        conversation_history = [
-            # ...
-        ]
-
-        greeting = random.choice(['Good evening. Can I help you with anything?', 'Alfred, At your service.', 'What can I do for you?'])
+        greeting = random.choice(['Yes?', 'At your service.', 'What can I do for you?'])
         synthesize_speech_v2(greeting)
 
         while True:
@@ -227,7 +283,7 @@ async def main():
                     print("Error transcribing audio: {0}".format(e))
                     continue
                 try:
-                    agent_chain.memory.chat_memory.add_user_message(user_input)  # Add user message to memory
+                    agent_chain.memory.chat_memory.add_user_message(user_input)
 
                     input_text = user_input
                     response = agent_chain.run(input=input_text)
@@ -236,14 +292,22 @@ async def main():
                     print("Bot's response:", bot_response)
                     synthesize_speech_v2(bot_response)
 
-                    agent_chain.memory.chat_memory.add_ai_message(bot_response)  # Add AI message to memory
+                    agent_chain.memory.chat_memory.add_ai_message(bot_response)
 
                     if "you're welcome" in bot_response.lower() or "you are welcome" in bot_response.lower() or "my pleasure" in bot_response.lower():
                         break
                 except Exception as e:
-                    print("An error occurred:", str(e))
-                    error_message = "Unfortunately sir, I have encountered an error. Is there anything else I can help you with?"
-                    synthesize_speech_v2(error_message)
+                    tb_string = traceback.format_exc()
+
+                    if "This model's maximum context length is" in tb_string:
+                        agent_chain.memory.chat_memory.clear()
+                        traceback.print_exc()
+                        error_message = "Apologies, the last request went over the maximum context length so I have to clear my memory. Is there anything else I can help you with?"
+                        synthesize_speech_v2(error_message)
+                    else:
+                        traceback.print_exc()
+                        error_message = "Unfortunately, I have encountered an error. Is there anything else I can help you with?"
+                        synthesize_speech_v2(error_message)
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -1,23 +1,21 @@
 ![Alfred](docs/alfred.png)
-# A.L.F.R.E.D. - Artificial Lifeform Rendered for Expedient Discourse
-Alfred is a LangChain and GPT-3.5-turbo powered personal assistant for you computer!<br>
+# A.L.F.R.E.D. - A LangChain Robot for Enhanced Digital-assistance
+Alfred is a LangChain and GPT-3.5-turbo powered personal assistant for your PC!<br>
 <sub>Image generated with Blue Willow AI on Discord</sub>
 
 ## Latest update
-* Added ability to switch between pyttsx3 and Bark for voice synthesis
-* Removed hotkey for now
-* Added intro.wav so that you know when it's done loading and is waiting for wake word (it was generated with Bark, that should give you an idea of the voice quality)
-* Made Barks history_prompt (also known as the voice) changable in one spot
-* Exceptions now loop back to wake word detection instead of crashing
-
-## Features
-* Natural language integration with Zapier, enabling Alfred to access, use and manage over 5000 applications
-* Speech recognition using the speech_recognition and whisper libraries
-* Speech synthesis using pyttsx3 or Bark (https://github.com/suno-ai/bark)
-* Uses LangChain to use tools to answer questions with more current data
-* Activate with a spoken wake word "Alfred" - user editable
-* Terminates the conversation when the bot says "You're welcome" or a similar phrase
-* Configurable tools for LangChain, so if you don't have an API for a tool or don't want the tool, you can disable it
+* Better ALFRED, better name!
+* Added chat window GUI using tkinter for quiet interaction with the bot (Can also be launched with chat.py)
+* Updated most variables to use settings.ini for easy update
+* Added a Settings window so that user can update settings from the GUI
+* Added a Keys window off of settings to update API keys
+* Added hotkey to main.py to launch chat window
+* Moved from ConversationBufferMemory to TokeBufferMemory to clear out memory when it hits 1000 tokens
+* Introduced a probably pretty hacky solution for the Wikipedia tool to stop constantly hitting the token limit
+* Updated the "Pinecone tool" so that user can specific their own tool name and description depending on what they use pinecone for
+* Added additional error handling to clear the current memory when you get an exception regarding the token limit so that you don't need to restart
+* Added a script for testing voices for pyttsx3
+* Added a notebook to help with ingesting into Pinecone (I have not tested all of the methods)
 
 ## Setup
 
@@ -25,13 +23,25 @@ Alfred is a LangChain and GPT-3.5-turbo powered personal assistant for you compu
 ```
 git clone https://github.com/masrad/ALFRED.git
 cd ALFRED
+```
+1.1 If you have multiple versions of Python installed, specify the location of 3.10:
+```
 C:\PATHTOYOUR\Python310\python.exe -m venv venv
 .\venv\Scripts\activate
 ```
-
-2. Next, install the required packages:
+1.2 If you only have 3.10 (verified with python --version) then you don't need a path:
 ```
-pip install -r requirements.txt
+python -m venv venv
+.\venv\Scripts\activate
+```
+
+2. If you want to use GPU with pytorch for Bark (recommended if you have a GPU), get your download string here:
+
+https://pytorch.org/get-started/locally/
+
+Since you're probably using pip on Windows, this should work for you, double check if you're unsure:
+```
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
 ```
 
 2.1 Install ffmpeg, as whisper requires this to work:
@@ -51,8 +61,13 @@ choco install ffmpeg
 # on Windows using Scoop (https://scoop.sh/)
 scoop install ffmpeg
 
-# on Windows using the less good way
+# on Windows using the more manual way
 https://www.geeksforgeeks.org/how-to-install-ffmpeg-on-windows/
+```
+
+2.2 Next, install the required packages:
+```
+pip install -r requirements.txt
 ```
 
 3. Create a .env file or rename the example in the root and update the information:
@@ -62,12 +77,16 @@ GOOGLE_API_KEY=your-key-here
 GOOGLE_CSE_ID=your-key-here
 WOLFRAM_ALPHA_APPID=your-key-here
 OPENWEATHERMAP_API_KEY=your-key-here
+ZAPIER_NLA_API_KEY=your-key-here
+PINE_API_KEY=your-key-here
 ```
 
-4. If you'd like, you can update the Wake Word to whatever you'd like in the main.py file
+IMPORTANT: If you are not using a certain tool, you still need SOMETHING in the environment variable, otherwise it will error. Just leave your-key-here if you're not using a tool and ensure it's disabled in settings.ini
 
-## Usage
-1. Run the main scrript:
+4. If you'd like, you can update the settings.ini before launching, most things are turned off by default
+
+## Voice Usage
+1. Run the main script:
 ```
 python main.py
 ```
@@ -79,6 +98,23 @@ python main.py
 4. The assistant will respond with synthesized speech.
 
 5. To end the conversation, say "Thank you" or a similar phrase.
+
+## Chat Usage
+1. Run the main script:
+```
+python main.py
+```
+
+2. Press the hotkey (default is ctrl+shift+9)
+
+3. A chat window will popup allowing you to interact with the bot over text
+
+4. You can access settings from this GUI as well
+
+Note: You can also launch only the chat window portion, and not even use the voice assistant by running the chat alone:
+```
+python chat.py
+```
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
@@ -122,34 +158,24 @@ If you would like to use any of the tools I have included, you will need to foll
 * Follow the prompts to make an API, as long as you aren't asking too often a free acount is fine
 * Enter the API into the .env at OPENWEATHERMAP_API_KEY
 
-## Important
-Remember, if you want to use a service and have an API key setup, you must enable the tool by updating the bool in the Settings class:
-```
-enable_search: bool = True
-enable_wikipedia: bool = True
-enable_calculator: bool = True
-enable_wolfram_alpha: bool = True
-enable_weather: bool = False
-```
+# Changelog
+## 4/26 update
+* Added Pinecone as a tool for getting answers based on the latest LangChain docs site
+* Added a notebook so that I can more easily vectorize stuff
+* Created tools folder for the voice checker and the pinecone notebook
+* Natural language integration with Zapier, enabling Alfred to access, use and manage over 5000 applications
+* Speech recognition using the speech_recognition and whisper libraries
+* Speech synthesis using pyttsx3 or Bark
+* Uses LangChain to use tools to answer questions with more current data
+* Activate with a spoken wake word "Alfred" - user editable
+* Terminates the conversation when the bot says "You're welcome" or a similar phrase
+* Configurable tools for LangChain, so if you don't have an API for a tool or don't want the tool, you can disable it
+## 4/24 update
+* Added ability to switch between pyttsx3 and a new project called Bark for voice synthesis
+* Removed hotkey so that I don't have to uncleanly thread both listeners
+* Added intro.wav so that you know when it's done loading and is waiting for wake word (it was generated with Bark, that should give you an idea of the voice quality)
+* Made Barks history_prompt (also known as the voice) changable in one spot
+* Exceptions now loop back to wake word detection instead of crashing
 
-## Important
-Remember, if you want to use a service and have an API key setup, you must enable the tool by updating the bool in the Settings class:
-```
-enable_search: bool = True
-enable_wikipedia: bool = True
-enable_calculator: bool = True
-enable_wolfram_alpha: bool = True
-enable_weather: bool = True
-enable_zapier: bool = True
-```
-If you want to enable Bark:
-```
-use_bark: bool = True
-```
-If you want to change Barks voice:
-```
-history_prompt: str = "en_speaker_1"
-```
-The available "voices" that you can use should be located in the venv folder, likely somewhere like \venv\Lib\site-packages\bark\assets\prompts
 ## License
 This project is licensed with GNU General Public License Version 3, see LICENSE.md for more information
